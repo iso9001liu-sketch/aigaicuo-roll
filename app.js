@@ -21593,7 +21593,7 @@ void main() {
   $("#loading").remove();
   var scene = new Scene();
   var camera = new OrthographicCamera(-8, 8, 6, -6, 0.1, 100);
-  camera.position.set(11, 15, 19);
+  camera.position.set(0, 23, 14);
   camera.lookAt(0, 0, 0);
   scene.add(new HemisphereLight(14153215, 3556946, 2.5));
   var sun = new DirectionalLight(16773334, 4);
@@ -21748,10 +21748,10 @@ void main() {
     const w = view.clientWidth, h = view.clientHeight;
     if (!w || !h) return;
     const mobile = globalThis.matchMedia?.("(max-width: 720px), (pointer: coarse)").matches ?? false;
-    camera.position.set(mobile ? 0 : 11, mobile ? 22 : 15, mobile ? 12 : 19);
+    camera.position.set(0, mobile ? 25 : 23, 14);
     camera.lookAt(0, 0, 0);
     camera.updateMatrixWorld();
-    $("#compass").textContent = mobile ? "\u2191 \u4E0A \xB7 \u2193 \u4E0B \xB7 \u2190 \u5DE6 \xB7 \u2192 \u53F3" : "\u2191 \u8FDC\u5904 \xB7 \u2193 \u8FD1\u5904 \xB7 \u2190 \u5DE6\u4FA7 \xB7 \u2192 \u53F3\u4FA7";
+    $("#compass").textContent = "\u2191 \u4E0A \xB7 \u2193 \u4E0B \xB7 \u2190 \u5DE6 \xB7 \u2192 \u53F3";
     renderer.setSize(w, h);
     const aspect2 = w / h;
     let horizontal = 0, vertical = 0;

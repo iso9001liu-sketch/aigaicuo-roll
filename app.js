@@ -20181,6 +20181,66 @@ void main() {
       return new _SphereGeometry(data.radius, data.widthSegments, data.heightSegments, data.phiStart, data.phiLength, data.thetaStart, data.thetaLength);
     }
   };
+  var TorusGeometry = class _TorusGeometry extends BufferGeometry {
+    constructor(radius = 1, tube = 0.4, radialSegments = 12, tubularSegments = 48, arc = Math.PI * 2) {
+      super();
+      this.type = "TorusGeometry";
+      this.parameters = {
+        radius,
+        tube,
+        radialSegments,
+        tubularSegments,
+        arc
+      };
+      radialSegments = Math.floor(radialSegments);
+      tubularSegments = Math.floor(tubularSegments);
+      const indices = [];
+      const vertices = [];
+      const normals = [];
+      const uvs = [];
+      const center = new Vector3();
+      const vertex2 = new Vector3();
+      const normal = new Vector3();
+      for (let j = 0; j <= radialSegments; j++) {
+        for (let i = 0; i <= tubularSegments; i++) {
+          const u = i / tubularSegments * arc;
+          const v = j / radialSegments * Math.PI * 2;
+          vertex2.x = (radius + tube * Math.cos(v)) * Math.cos(u);
+          vertex2.y = (radius + tube * Math.cos(v)) * Math.sin(u);
+          vertex2.z = tube * Math.sin(v);
+          vertices.push(vertex2.x, vertex2.y, vertex2.z);
+          center.x = radius * Math.cos(u);
+          center.y = radius * Math.sin(u);
+          normal.subVectors(vertex2, center).normalize();
+          normals.push(normal.x, normal.y, normal.z);
+          uvs.push(i / tubularSegments);
+          uvs.push(j / radialSegments);
+        }
+      }
+      for (let j = 1; j <= radialSegments; j++) {
+        for (let i = 1; i <= tubularSegments; i++) {
+          const a = (tubularSegments + 1) * j + i - 1;
+          const b = (tubularSegments + 1) * (j - 1) + i - 1;
+          const c = (tubularSegments + 1) * (j - 1) + i;
+          const d = (tubularSegments + 1) * j + i;
+          indices.push(a, b, d);
+          indices.push(b, c, d);
+        }
+      }
+      this.setIndex(indices);
+      this.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+      this.setAttribute("normal", new Float32BufferAttribute(normals, 3));
+      this.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
+    }
+    copy(source) {
+      super.copy(source);
+      this.parameters = Object.assign({}, source.parameters);
+      return this;
+    }
+    static fromJSON(data) {
+      return new _TorusGeometry(data.radius, data.tube, data.radialSegments, data.tubularSegments, data.arc);
+    }
+  };
   var TubeGeometry = class _TubeGeometry extends BufferGeometry {
     constructor(path2 = new QuadraticBezierCurve3(new Vector3(-1, -1, 0), new Vector3(-1, 1, 0), new Vector3(1, 1, 0)), tubularSegments = 64, radius = 1, radialSegments = 8, closed = false) {
       super();
@@ -21546,7 +21606,15 @@ void main() {
     { "name": "\u6B65\u6B65\u4E3A\u8425", "desc": "\u6709\u65F6\u8981\u5148\u8FDC\u79BB\u7EC8\u70B9\uFF0C\u624D\u80FD\u627E\u5230\u6B63\u786E\u7684\u8DEF\u3002", "rows": ["0200000111", "0S00000112", "010000G110", "0100010112", "0101010111", "0111111011", "0101111211", "0111110110"], "par": 32 },
     { "name": "\u8FC2\u56DE\u4E4B\u8DEF", "desc": "\u6709\u65F6\u8981\u5148\u8FDC\u79BB\u7EC8\u70B9\uFF0C\u624D\u80FD\u627E\u5230\u6B63\u786E\u7684\u8DEF\u3002", "rows": ["1112011101", "1S11011111", "1G01112112", "1000001121", "1011111110", "1122101011", "2111011121", "2101011110"], "par": 34 },
     { "name": "\u9669\u8DEF\u6C42\u751F", "desc": "\u6709\u65F6\u8981\u5148\u8FDC\u79BB\u7EC8\u70B9\uFF0C\u624D\u80FD\u627E\u5230\u6B63\u786E\u7684\u8DEF\u3002", "rows": ["0101101111", "0S21110121", "0102111111", "1111011000", "111200G000", "1101101221", "1011102001", "1112122001", "1011111001"], "par": 41 },
-    { "name": "\u7EC8\u6781\u7FFB\u6EDA", "desc": "\u6709\u65F6\u8981\u5148\u8FDC\u79BB\u7EC8\u70B9\uFF0C\u624D\u80FD\u627E\u5230\u6B63\u786E\u7684\u8DEF\u3002", "rows": ["1121212110", "1S11110G11", "1110100110", "1101110111", "1001011211", "1102111101", "0111100111", "1212101111", "1111212121"], "par": 46 }
+    { "name": "\u7EC8\u6781\u7FFB\u6EDA", "desc": "\u6709\u65F6\u8981\u5148\u8FDC\u79BB\u7EC8\u70B9\uFF0C\u624D\u80FD\u627E\u5230\u6B63\u786E\u7684\u8DEF\u3002", "rows": ["1121212110", "1S11110G11", "1110100110", "1101110111", "1001011211", "1102111101", "0111100111", "1212101111", "1111212121"], "par": 46 },
+    { "name": "\u5524\u9192\u9690\u6865", "desc": "\u8E29\u9752\u8272\u5706\u73AF\u5F00\u5173\uFF0C\u9690\u6865\u51FA\u73B0\uFF1B\u79BB\u5F00\u540E\u518D\u8E29\uFF0C\u9690\u6865\u6536\u8D77\u3002", "rows": ["000000000", "0S0021100", "1G0201100", "112211101", "1111a1121", "110022A2a", "A101a1121", "010210110"], "par": 19 },
+    { "name": "\u5F00\u5408\u4E4B\u95F4", "desc": "\u8E29\u9752\u8272\u5706\u73AF\u5F00\u5173\uFF0C\u9690\u6865\u51FA\u73B0\uFF1B\u79BB\u5F00\u540E\u518D\u8E29\uFF0C\u9690\u6865\u6536\u8D77\u3002", "rows": ["011201100", "0S1111111", "001a11010", "0010G1010", "001101101", "111A11111", "a10111a1A", "000101001"], "par": 26 },
+    { "name": "\u6298\u8FD4\u673A\u5173", "desc": "\u8E29\u9752\u8272\u5706\u73AF\u5F00\u5173\uFF0C\u9690\u6865\u51FA\u73B0\uFF1B\u79BB\u5F00\u540E\u518D\u8E29\uFF0C\u9690\u6865\u6536\u8D77\u3002", "rows": ["2a1111111", "1S11101a1", "111010111", "101212021", "2101A2101", "12210A1a1", "01111G100", "011002100"], "par": 30 },
+    { "name": "\u7D2B\u9752\u53CC\u6865", "desc": "\u9752\u8272\u4E0E\u7D2B\u8272\u5F00\u5173\u63A7\u5236\u540C\u8272\u9690\u6865\uFF1B\u518D\u6B21\u8E29\u4E0A\u53EF\u6536\u8D77\uFF0C\u5C0F\u5FC3\u811A\u4E0B\u3002", "rows": ["11a120000", "BSG000000", "A10000000", "a121b2210", "111b10010", "B101A11a0", "111202100", "0b1112100"], "par": 28 },
+    { "name": "\u4EA4\u9519\u5F00\u5173", "desc": "\u9752\u8272\u4E0E\u7D2B\u8272\u5F00\u5173\u63A7\u5236\u540C\u8272\u9690\u6865\uFF1B\u518D\u6B21\u8E29\u4E0A\u53EF\u6536\u8D77\uFF0C\u5C0F\u5FC3\u811A\u4E0B\u3002", "rows": ["0200000111", "0S00000112", "010000G1b0", "0100010112", "01010A0111", "0A1B11b01a", "01011aa2b1", "011B110110"], "par": 33 },
+    { "name": "\u865A\u5B9E\u56DE\u5ECA", "desc": "\u9752\u8272\u4E0E\u7D2B\u8272\u5F00\u5173\u63A7\u5236\u540C\u8272\u9690\u6865\uFF1B\u518D\u6B21\u8E29\u4E0A\u53EF\u6536\u8D77\uFF0C\u5C0F\u5FC3\u811A\u4E0B\u3002", "rows": ["11B2011101", "1SA101a111", "1G01112112", "100000112b", "B01111b110", "a122a0101b", "2111011A21", "2101011110"], "par": 36 },
+    { "name": "\u673A\u5173\u8FF7\u57CE", "desc": "\u9752\u8272\u4E0E\u7D2B\u8272\u5F00\u5173\u63A7\u5236\u540C\u8272\u9690\u6865\uFF1B\u518D\u6B21\u8E29\u4E0A\u53EF\u6536\u8D77\uFF0C\u5C0F\u5FC3\u811A\u4E0B\u3002", "rows": ["01011011A1", "0S21ab0121", "010211a111", "b1110a1000", "111200G000", "1A01B01221", "1011102001", "B112b22001", "1011111001"], "par": 47 },
+    { "name": "\u6700\u540E\u7684\u6D6E\u5C9B", "desc": "\u9752\u8272\u4E0E\u7D2B\u8272\u5F00\u5173\u63A7\u5236\u540C\u8272\u9690\u6865\uFF1B\u518D\u6B21\u8E29\u4E0A\u53EF\u6536\u8D77\uFF0C\u5C0F\u5FC3\u811A\u4E0B\u3002", "rows": ["a121212110", "1Sa1110G11", "1A10100A10", "1101a1011B", "10010B1211", "1b02111b01", "0111b00111", "1212101111", "1111212121"], "par": 52 }
   ].map((l) => {
     let start, goal;
     const tiles = /* @__PURE__ */ new Map();
@@ -21557,15 +21625,33 @@ void main() {
     }));
     return { ...l, start, goal, tiles };
   });
-  var valid = (l, s) => cells(s).every(([x, z]) => l.tiles.has(`${x},${z}`)) && !(s.o === "u" && l.tiles.get(`${s.x},${s.z}`) === "2");
-  var won = (l, s) => s.o === "u" && s.x === l.goal.x && s.z === l.goal.z;
+  var active = (l, x, z, mask = 0) => {
+    const v = l.tiles.get(x + "," + z);
+    return !!v && (v !== "a" && v !== "b" || !!(mask & (v === "a" ? 1 : 2)));
+  };
+  var valid = (l, s) => !s.fallen && cells(s).every(([x, z]) => active(l, x, z, s.mask || 0)) && !(s.o === "u" && l.tiles.get(s.x + "," + s.z) === "2");
+  var won = (l, s) => valid(l, s) && s.o === "u" && s.x === l.goal.x && s.z === l.goal.z;
+  function advance(l, s, d) {
+    const n = { ...roll(s, d), mask: s.mask || 0 };
+    if (!valid(l, n)) return { ...n, fallen: true };
+    const before = new Set(cells(s).map(([x, z]) => x + "," + z));
+    let toggle = 0;
+    for (const [x, z] of cells(n)) {
+      if (before.has(x + "," + z)) continue;
+      const v = l.tiles.get(x + "," + z);
+      if (v === "A") toggle |= 1;
+      if (v === "B") toggle |= 2;
+    }
+    n.mask ^= toggle;
+    return n;
+  }
   function solve(l, start = l.start) {
-    const q = [[start, []]], seen = /* @__PURE__ */ new Set([JSON.stringify(start)]);
+    const q = [[start, []]], key = (s) => [s.x, s.z, s.o, s.mask || 0].join(","), seen = /* @__PURE__ */ new Set([key(start)]);
     for (let i = 0; i < q.length; i++) {
       const [s, path2] = q[i];
       if (won(l, s)) return path2;
       for (const d of Object.keys(directions)) {
-        const n = roll(s, d), k = JSON.stringify(n);
+        const n = advance(l, s, d), k = key(n);
         if (valid(l, n) && !seen.has(k)) {
           seen.add(k);
           q.push([n, [...path2, d]]);
@@ -21674,6 +21760,18 @@ void main() {
   var demoAt = 0;
   var networkBusy = false;
   var goalRing;
+  var bridgeMeshes = [];
+  var switchMeshes = [];
+  function syncBridges() {
+    for (const { mesh, bit } of bridgeMeshes) {
+      const on = !!((state.mask || 0) & bit);
+      mesh.material.transparent = !on;
+      mesh.material.opacity = on ? 1 : 0.13;
+      mesh.position.y = on ? -0.12 : -0.22;
+      mesh.castShadow = on;
+    }
+    for (const { mesh, bit } of switchMeshes) mesh.material.emissiveIntensity = (state.mask || 0) & bit ? 0.8 : 0.1;
+  }
   function position(s) {
     return new Vector3(s.x + (s.o === "x" ? 0.5 : 0), s.o === "u" ? 1 : 0.5, s.z + (s.o === "z" ? 0.5 : 0));
   }
@@ -21720,11 +21818,27 @@ void main() {
     hero.position.copy(position(state));
     hero.quaternion.identity();
     disposeBoard();
+    bridgeMeshes = [];
+    switchMeshes = [];
     const l = levels[i];
     world.position.set(-(l.rows[0].length - 1) / 2, 0, -(l.rows.length - 1) / 2);
     for (const [k, v] of l.tiles) {
       const [x, z] = k.split(",").map(Number);
-      if (v === "G") {
+      if (v === "a" || v === "b") {
+        const bit = v === "a" ? 1 : 2;
+        const mesh = box(0.93, 0.22, 0.93, mat(bit === 1 ? "#4de3cd" : "#c28bff", { transparent: true, opacity: 0.13 }), board, x, -0.22, z);
+        bridgeMeshes.push({ mesh, bit });
+      } else if (v === "A" || v === "B") {
+        const bit = v === "A" ? 1 : 2;
+        box(0.95, 0.24, 0.95, mat("#405963"), board, x, -0.14, z);
+        const mesh = box(0.68, 0.05, 0.68, mat(bit === 1 ? "#4de3cd" : "#c28bff", { emissive: bit === 1 ? "#4de3cd" : "#c28bff", emissiveIntensity: 0.1 }), board, x, 5e-3, z);
+        switchMeshes.push({ mesh, bit });
+        const ring = new Mesh(new TorusGeometry(0.22, 0.04, 8, 24), mat("#17353d"));
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(x, 0.045, z);
+        board.add(ring);
+        if (bit === 2) box(0.065, 0.02, 0.2, mat("#17353d"), board, x, 0.055, z);
+      } else if (v === "G") {
         for (const [w, d, px2, pz2] of [[1, 0.08, x, z - 0.46], [1, 0.08, x, z + 0.46], [0.08, 0.84, x - 0.46, z], [0.08, 0.84, x + 0.46, z]]) box(w, 0.14, d, mat("#ffe16b", { emissive: "#d4a724", emissiveIntensity: 0.2 }), board, px2, -0.065, pz2);
         box(0.8, 0.04, 0.8, mat("#070f16"), board, x, -0.55, z);
         goalRing = box(0.45, 0.02, 0.45, mat("#ffe16b", { transparent: true, opacity: 0.3 }), board, x, -0.48, z);
@@ -21740,7 +21854,8 @@ void main() {
     }
     $("#name").textContent = l.name;
     $("#desc").textContent = l.desc;
-    $("#message").innerHTML = "\u8BA9\u827E\u6539\u9519<strong>\u7AD9\u7ACB</strong>\u843D\u5165\u9EC4\u8272\u7EC8\u70B9\u3002";
+    $("#message").innerHTML = index >= 16 ? "\u5706\u73AF\u5F00\u5173\uFF1A\u8E29\u4E0A\u5207\u6362\u540C\u8272\u9690\u6865 \xB7 \u534A\u900F\u660E\u7816\u4E0D\u80FD\u627F\u91CD" : "\u8BA9\u827E\u6539\u9519<strong>\u7AD9\u7ACB</strong>\u843D\u5165\u9EC4\u8272\u7EC8\u70B9\u3002";
+    syncBridges();
     update();
     resize();
   }
@@ -21772,7 +21887,7 @@ void main() {
   globalThis.matchMedia?.("(max-width: 720px), (pointer: coarse)").addEventListener("change", resize);
   function move(d, automatic = false) {
     if (!player || networkBusy || demo && !automatic || busy || !hero.visible || !Object.hasOwn(directions, d) || $("#modal").open) return false;
-    const next = roll(state, d), [dx, dz] = directions[d];
+    const next = advance(levels[index], state, d), [dx, dz] = directions[d];
     history.push({ state: { ...state }, q: hero.quaternion.clone() });
     path.push(d);
     count++;
@@ -21787,6 +21902,7 @@ void main() {
   }
   function finish() {
     state = anim.next;
+    syncBridges();
     hero.position.copy(position(state));
     anim = null;
     if (!valid(levels[index], state)) {
@@ -21803,6 +21919,7 @@ void main() {
     if (demo || networkBusy || busy || !history.length) return;
     const h = history.pop();
     state = h.state;
+    syncBridges();
     hero.quaternion.copy(h.q);
     hero.position.copy(position(state));
     hero.visible = true;
@@ -21898,7 +22015,7 @@ void main() {
     if (demo || networkBusy || !player) return;
     $("#close").hidden = false;
     $("#modal").dataset.locked = "false";
-    $("#modalbody").innerHTML = '<span class="eyebrow">HOW TO ROLL</span><h2>\u7FFB\u4E2A\u8EAB\uFF0C\u52A8\u52A8\u8111\u3002</h2><p>\u7528\u65B9\u5411\u952E\u6216 WASD \u7FFB\u6EDA\u827E\u6539\u9519\u3002\u624B\u673A\u91C7\u7528\u6B63\u5411\u4FEF\u89C6\u89D2\uFF0C\u6CBF\u5C4F\u5E55\u4E0A\u4E0B\u5DE6\u53F3\u76F4\u6ED1\uFF0C\u6216\u70B9\u51FB\u68CB\u76D8\u4E0B\u65B9\u7684\u5927\u65B9\u5411\u952E\u3002\u6BCF\u6B21\u64CD\u4F5C\u53EA\u7FFB\u4E00\u683C\u52A8\u4F5C\uFF0C\u659C\u6ED1\u4E0D\u4F1A\u6267\u884C\u3002</p><p>\u7AD9\u7ACB\u65F6\u5360\u4E00\u683C\uFF0C\u8EBA\u4E0B\u65F6\u5360\u4E24\u683C\u3002\u8EAB\u4F53\u5FC5\u987B\u5B8C\u5168\u7559\u5728\u5E73\u53F0\u4E0A\uFF0C\u6700\u540E<strong>\u7AD9\u7ACB\u843D\u5165\u9EC4\u8272\u65B9\u6D1E</strong>\u5373\u53EF\u901A\u5173\u3002</p><p>\u6A59\u8272\u8584\u677F\u53EA\u80FD\u8EBA\u7740\u901A\u8FC7\u3002\u8D70\u9519\u4E86\uFF1F\u6309 Z \u64A4\u9500\uFF0C\u6309 R \u91CD\u6765\u3002</p><button class="primary" id="gotit">\u660E\u767D\uFF0C\u51FA\u53D1\uFF01</button>';
+    $("#modalbody").innerHTML = '<span class="eyebrow">HOW TO ROLL</span><h2>\u7FFB\u4E2A\u8EAB\uFF0C\u52A8\u52A8\u8111\u3002</h2><p>\u7528\u65B9\u5411\u952E\u6216 WASD \u7FFB\u6EDA\u827E\u6539\u9519\u3002\u624B\u673A\u91C7\u7528\u6B63\u5411\u4FEF\u89C6\u89D2\uFF0C\u6CBF\u5C4F\u5E55\u4E0A\u4E0B\u5DE6\u53F3\u76F4\u6ED1\uFF0C\u6216\u70B9\u51FB\u68CB\u76D8\u4E0B\u65B9\u7684\u5927\u65B9\u5411\u952E\u3002\u6BCF\u6B21\u64CD\u4F5C\u53EA\u7FFB\u4E00\u683C\u52A8\u4F5C\uFF0C\u659C\u6ED1\u4E0D\u4F1A\u6267\u884C\u3002</p><p>\u7AD9\u7ACB\u65F6\u5360\u4E00\u683C\uFF0C\u8EBA\u4E0B\u65F6\u5360\u4E24\u683C\u3002\u8EAB\u4F53\u5FC5\u987B\u5B8C\u5168\u7559\u5728\u5E73\u53F0\u4E0A\uFF0C\u6700\u540E<strong>\u7AD9\u7ACB\u843D\u5165\u9EC4\u8272\u65B9\u6D1E</strong>\u5373\u53EF\u901A\u5173\u3002</p><p>\u6A59\u8272\u8584\u677F\u53EA\u80FD\u8EBA\u7740\u901A\u8FC7\u3002\u9752\u8272\u5706\u73AF\u5F00\u5173\u63A7\u5236\u9752\u8272\u9690\u6865\uFF0C\u7D2B\u8272\u5F00\u5173\u63A7\u5236\u7D2B\u8272\u9690\u6865\uFF1B\u7AD9\u7ACB\u6216\u8EBA\u4E0B\u8E29\u4E0A\u5747\u53EF\u5207\u6362\uFF0C\u79BB\u5F00\u518D\u8E29\u4F1A\u6536\u8D77\u3002\u534A\u900F\u660E\u7816\u53EA\u662F\u4F4D\u7F6E\u63D0\u793A\uFF0C\u4E0D\u80FD\u627F\u91CD\u3002\u8D70\u9519\u4E86\uFF1F\u6309 Z \u64A4\u9500\uFF0C\u6309 R \u91CD\u6765\u3002</p><button class="primary" id="gotit">\u660E\u767D\uFF0C\u51FA\u53D1\uFF01</button>';
     $("#modal").showModal();
     $("#gotit").onclick = () => $("#modal").close();
   };
